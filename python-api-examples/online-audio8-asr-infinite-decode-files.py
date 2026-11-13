@@ -12,16 +12,16 @@ a real streaming application does.
 
 Usage:
 
-wget https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
-tar xvf sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
-rm sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
+tar xvf sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
+rm sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
 
 ./python-api-examples/online-audio8-asr-infinite-decode-files.py \
-  --model-dir=./sherpa-onnx-audio8-asr-infinite-0.1b-int8 \
-  --tokenizer=./sherpa-onnx-audio8-asr-infinite-0.1b-int8/tokenizer \
+  --model-dir=./sherpa-onnx-audio8-asr-infinite-int8 \
+  --tokenizer=./sherpa-onnx-audio8-asr-infinite-int8/tokenizer \
   --frame-len=8 \
   --delay-ms=480 \
-  ./sherpa-onnx-audio8-asr-infinite-0.1b-int8/test_wavs/0.wav
+  ./sherpa-onnx-audio8-asr-infinite-int8/test_wavs/0.wav
 
 The numbers below must match the exported graphs:
 

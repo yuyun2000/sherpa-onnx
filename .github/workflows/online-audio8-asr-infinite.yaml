@@ -132,7 +132,7 @@ jobs:
         shell: bash
         continue-on-error: true
         run: |
-          dir=sherpa-onnx-audio8-asr-infinite-0.1b-int8
+          dir=sherpa-onnx-audio8-asr-infinite-int8
 
           # The models are also mirrored on HuggingFace; switch `base` to the
           # k2-fsa release once the artifact is uploaded there.

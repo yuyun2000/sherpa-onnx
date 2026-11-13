@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cinttypes>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -153,9 +154,10 @@ void OnlineStreamAudio8AsrInfinite::FillWindow(int64_t start, int64_t end,
     const int64_t index = user - state_.pcm0;
     if (index < 0 || index >= static_cast<int64_t>(state_.pcm.size())) {
       SHERPA_ONNX_LOGE(
-          "audio8-asr-infinite: sample %lld is no longer buffered "
-          "(pcm0=%lld, size=%zu). Please do not reset the stream so far back.",
-          static_cast<long long>(user), static_cast<long long>(state_.pcm0),
+          "audio8-asr-infinite: sample %" PRIi64 " is no longer buffered "
+          "(pcm0=%" PRIi64 ", size=%zu). Please do not reset the stream so far "
+          "back.",
+          static_cast<int64_t>(user), static_cast<int64_t>(state_.pcm0),
           state_.pcm.size());
       SHERPA_ONNX_EXIT(-1);
     }

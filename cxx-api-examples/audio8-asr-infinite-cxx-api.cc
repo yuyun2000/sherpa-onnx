@@ -12,9 +12,9 @@
 //
 // clang-format off
 /*
-wget https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
-tar xvf sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
-rm sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
+tar xvf sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
+rm sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
 */
 //
 // clang-format on
@@ -55,7 +55,7 @@ int32_t main() {
   OnlineRecognizerConfig config;
 
   // clang-format off
-  const std::string dir = "./sherpa-onnx-audio8-asr-infinite-0.1b-int8";
+  const std::string dir = "./sherpa-onnx-audio8-asr-infinite-int8";
 
   // Leaving the per-graph paths empty resolves them against `dir`.
   config.model_config.audio8_asr_infinite.model_dir = dir;

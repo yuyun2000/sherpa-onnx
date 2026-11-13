@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cinttypes>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -134,14 +135,16 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::InitPromptIds() {
       streaming_pad_id_ < 0 || streaming_word_id_ < 0) {
     SHERPA_ONNX_LOGE(
         "audio8-asr-infinite: the tokenizer is missing the prompt tokens. "
-        "bos=%lld eos=%lld pad=%lld language(%s)=%lld streaming_pad=%lld "
-        "streaming_word=%lld. vocab.json must contain the 26 added tokens of "
+        "bos=%" PRIi64 " eos=%" PRIi64 " pad=%" PRIi64
+        " language(%s)=%" PRIi64 " streaming_pad=%" PRIi64 " "
+        "streaming_word=%" PRIi64
+        ". vocab.json must contain the 26 added tokens of "
         "the checkpoint (ids 151643..151668).",
-        static_cast<long long>(bos_id_), static_cast<long long>(eos_id_),
-        static_cast<long long>(pad_id_), lang_token.c_str(),
-        static_cast<long long>(language_id_),
-        static_cast<long long>(streaming_pad_id_),
-        static_cast<long long>(streaming_word_id_));
+        static_cast<int64_t>(bos_id_), static_cast<int64_t>(eos_id_),
+        static_cast<int64_t>(pad_id_), lang_token.c_str(),
+        static_cast<int64_t>(language_id_),
+        static_cast<int64_t>(streaming_pad_id_),
+        static_cast<int64_t>(streaming_word_id_));
     SHERPA_ONNX_EXIT(-1);
   }
 
@@ -150,22 +153,24 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::InitPromptIds() {
       streaming_pad_id_ >= vocab_size || streaming_word_id_ >= vocab_size) {
     SHERPA_ONNX_LOGE(
         "audio8-asr-infinite: a prompt token id is >= the vocabulary of the "
-        "decoder (%d): bos=%lld eos=%lld pad=%lld language=%lld "
-        "streaming_pad=%lld streaming_word=%lld",
-        vocab_size, static_cast<long long>(bos_id_),
-        static_cast<long long>(eos_id_), static_cast<long long>(pad_id_),
-        static_cast<long long>(language_id_),
-        static_cast<long long>(streaming_pad_id_),
-        static_cast<long long>(streaming_word_id_));
+        "decoder (%d): bos=%" PRIi64 " eos=%" PRIi64
+        " pad=%" PRIi64 " language=%" PRIi64 " "
+        "streaming_pad=%" PRIi64 " streaming_word=%" PRIi64 "",
+        vocab_size, static_cast<int64_t>(bos_id_),
+        static_cast<int64_t>(eos_id_), static_cast<int64_t>(pad_id_),
+        static_cast<int64_t>(language_id_),
+        static_cast<int64_t>(streaming_pad_id_),
+        static_cast<int64_t>(streaming_word_id_));
     SHERPA_ONNX_EXIT(-1);
   }
 
   if (c.debug || config_.model_config.debug) {
     SHERPA_ONNX_LOGE(
-        "audio8-asr-infinite: prompt bos=%lld language=%lld pad=%lld, clock "
+        "audio8-asr-infinite: prompt bos=%" PRIi64
+        " language=%" PRIi64 " pad=%" PRIi64 ", clock "
         "%d ms, delay %d tokens, prefill %d tokens, right pad %d tokens",
-        static_cast<long long>(bos_id_), static_cast<long long>(language_id_),
-        static_cast<long long>(pad_id_), gear_.clock_ms, gear_.delay_tokens,
+        static_cast<int64_t>(bos_id_), static_cast<int64_t>(language_id_),
+        static_cast<int64_t>(pad_id_), gear_.clock_ms, gear_.delay_tokens,
         gear_.prefill_tokens, gear_.right_pad_tokens);
   }
 }
@@ -231,7 +236,8 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::EmitToken(
   state->token_probs.push_back(log_prob);
 }
 
-void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const {
+void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(
+    OnlineStream *s) const {
   auto *stream = Cast(s);
   auto &st = stream->State();
 
@@ -261,9 +267,10 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const 
     st.pos_enc -= enc_shift;
     if (verbose) {
       SHERPA_ONNX_LOGE(
-          "audio8-asr-infinite: rolled the tower cache by %lld frames, %lld "
+          "audio8-asr-infinite: rolled the tower cache by %" PRIi64
+          " frames, %" PRIi64 " "
           "remain",
-          static_cast<long long>(enc_shift), static_cast<long long>(st.pos_enc));
+          static_cast<int64_t>(enc_shift), static_cast<int64_t>(st.pos_enc));
     }
   }
 
@@ -290,9 +297,10 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const 
     st.pos_dec -= dec_shift;
     if (verbose) {
       SHERPA_ONNX_LOGE(
-          "audio8-asr-infinite: rolled the decoder cache by %lld slots, %lld "
+          "audio8-asr-infinite: rolled the decoder cache by %" PRIi64
+          " slots, %" PRIi64 " "
           "remain",
-          static_cast<long long>(dec_shift), static_cast<long long>(st.pos_dec));
+          static_cast<int64_t>(dec_shift), static_cast<int64_t>(st.pos_dec));
     }
   }
 
@@ -314,9 +322,10 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const 
   const int64_t num_rows = shape[1];
   if (num_rows <= 0 || num_rows > num_tokens) {
     SHERPA_ONNX_LOGE(
-        "audio8-asr-infinite: the decoder returned %lld logits rows for a step "
+        "audio8-asr-infinite: the decoder returned %" PRIi64
+        " logits rows for a step "
         "of %d tokens",
-        static_cast<long long>(num_rows), num_tokens);
+        static_cast<int64_t>(num_rows), num_tokens);
     SHERPA_ONNX_EXIT(-1);
   }
   const float *data = logits.GetTensorData<float>();
@@ -347,12 +356,14 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const 
     }
     energy = n_pcm > 0 ? std::sqrt(energy / n_pcm) : 0.0;
     SHERPA_ONNX_LOGE(
-        "audio8-asr-infinite: step %lld window [%lld, %lld) n_pcm=%d "
-        "tokens=%d pos_enc=%lld pos_dec=%lld token=%lld rms=%.4f text='%s'",
-        static_cast<long long>(st.num_steps),
-        static_cast<long long>(win_start), static_cast<long long>(win_end),
-        n_pcm, num_tokens, static_cast<long long>(st.pos_enc),
-        static_cast<long long>(st.pos_dec), static_cast<long long>(token),
+        "audio8-asr-infinite: step %" PRIi64 " window [%" PRIi64
+        ", %" PRIi64 ") n_pcm=%d "
+        "tokens=%d pos_enc=%" PRIi64 " pos_dec=%" PRIi64
+        " token=%" PRIi64 " rms=%.4f text='%s'",
+        static_cast<int64_t>(st.num_steps),
+        static_cast<int64_t>(win_start), static_cast<int64_t>(win_end),
+        n_pcm, num_tokens, static_cast<int64_t>(st.pos_enc),
+        static_cast<int64_t>(st.pos_dec), static_cast<int64_t>(token),
         energy, st.text.c_str());
   }
 }
@@ -368,8 +379,8 @@ OnlineRecognizerResult OnlineRecognizerAudio8AsrInfiniteImpl::GetResult(
   r.timestamps = st.token_timestamps;
   r.ys_probs = st.token_probs;
   r.segment = s->GetCurrentSegment();
-  r.start_time =
-      static_cast<float>(st.segment_start_user) / static_cast<float>(kSampleRate);
+  r.start_time = static_cast<float>(st.segment_start_user) /
+                 static_cast<float>(kSampleRate);
 
   r.text = ApplyInverseTextNormalization(std::move(r.text));
   r.text = ApplyHomophoneReplacer(std::move(r.text));

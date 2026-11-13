@@ -17,9 +17,9 @@
 //
 // clang-format off
 /*
-wget https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
-tar xvf sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
-rm sherpa-onnx-audio8-asr-infinite-0.1b-int8.tar.bz2
+wget https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
+tar xvf sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
+rm sherpa-onnx-audio8-asr-infinite-int8.tar.bz2
 */
 //
 // clang-format on
@@ -60,11 +60,11 @@ static void PrintPartial(char **printed, const char *text) {
 int32_t main() {
   // clang-format off
   const char *model_dir =
-      "./sherpa-onnx-audio8-asr-infinite-0.1b-int8";
+      "./sherpa-onnx-audio8-asr-infinite-int8";
   const char *tokenizer_dir =
-      "./sherpa-onnx-audio8-asr-infinite-0.1b-int8/tokenizer";
+      "./sherpa-onnx-audio8-asr-infinite-int8/tokenizer";
   const char *wav_filename =
-      "./sherpa-onnx-audio8-asr-infinite-0.1b-int8/test_wavs/0.wav";
+      "./sherpa-onnx-audio8-asr-infinite-int8/test_wavs/0.wav";
   // clang-format on
 
   const char *provider = "cpu";

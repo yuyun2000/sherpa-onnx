@@ -2121,8 +2121,8 @@ struct OfflineSpeakerDiarizationSegment {
 };
 
 /** @brief Progress callback for offline speaker diarization. */
-using OfflineSpeakerDiarizationProgressCallback =
-    std::function<void(int32_t num_processed_chunks, int32_t num_total_chunks)>;
+using OfflineSpeakerDiarizationProgressCallback = std::function<void(
+    int32_t num_processed_chunks, int32_t num_total_chunks)>;
 
 /** @brief RAII wrapper for offline speaker diarization. */
 class SHERPA_ONNX_API OfflineSpeakerDiarization
@@ -2184,7 +2184,8 @@ class SHERPA_ONNX_API OfflineDiacritization
     : public MoveOnly<OfflineDiacritization, SherpaOnnxOfflineDiacritization> {
  public:
   /** @brief Create an offline diacritization model. */
-  static OfflineDiacritization Create(const OfflineDiacritizationConfig &config);
+  static OfflineDiacritization Create(
+      const OfflineDiacritizationConfig &config);
 
   /** @brief Destroy the wrapped C handle. */
   void Destroy(const SherpaOnnxOfflineDiacritization *diacrt) const;

@@ -289,7 +289,8 @@ bool Audio8InfiniteGear::FromConfig(int32_t frame_len, int32_t delay_ms,
   const int32_t clock_ms = 20 * frame_len;
   if (delay_ms <= 0 || delay_ms % clock_ms != 0) {
     if (error) {
-      *error = "--audio8-asr-infinite-delay-ms must be a positive multiple of " +
+      *error =
+          "--audio8-asr-infinite-delay-ms must be a positive multiple of " +
                std::to_string(clock_ms) + " ms (frame_len " +
                std::to_string(frame_len) + "), given " +
                std::to_string(delay_ms);

@@ -313,7 +313,7 @@ jobs:
 
           ls -lh $name
 
-          dir=sherpa-onnx-audio8-asr-infinite-4b-int8
+          dir=sherpa-onnx-audio8-asr-infinite-int8
           base=https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models
           if ! curl -fSL -O "$base/$dir.tar.bz2"; then
             echo "$dir.tar.bz2 is not available yet; skipping the end-to-end run"

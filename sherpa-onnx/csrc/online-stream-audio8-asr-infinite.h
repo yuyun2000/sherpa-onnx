@@ -22,7 +22,8 @@ namespace sherpa_onnx {
 //
 // The model has no "chunk state" other than the KV caches: the conv frontend is
 // re-run on a look-back / look-ahead PCM window for every clock, so the sample
-// ring buffer is the only audio state.  All positions are absolute; a cache roll
+// ring buffer is the only audio state.  All positions are absolute; a
+// cache roll
 // re-bases them, which is exact because the keys are rotated when they are
 // written.
 struct Audio8InfiniteStreamState {
@@ -127,7 +128,6 @@ class OnlineStreamAudio8AsrInfinite : public OnlineStream {
   void UpdateSilence() const;
 
  private:
-
   const OnlineAudio8AsrInfiniteModel *model_;
   int64_t bos_id_;
   int64_t lang_id_;

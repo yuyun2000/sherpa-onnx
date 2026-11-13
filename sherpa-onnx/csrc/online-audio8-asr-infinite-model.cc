@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cinttypes>
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
@@ -410,9 +411,10 @@ class OnlineAudio8AsrInfiniteModel::Impl {
 
     if (shift >= pos_enc) {
       SHERPA_ONNX_LOGE(
-          "audio8-asr-infinite: the tower cache needs a roll of %lld frames "
-          "but only %lld are cached",
-          static_cast<long long>(shift), static_cast<long long>(pos_enc));
+          "audio8-asr-infinite: the tower cache needs a roll of %" PRIi64
+          " frames "
+          "but only %" PRIi64 " are cached",
+          static_cast<int64_t>(shift), static_cast<int64_t>(pos_enc));
       SHERPA_ONNX_EXIT(-1);
     }
     return shift;
@@ -441,9 +443,10 @@ class OnlineAudio8AsrInfiniteModel::Impl {
     }
     if (shift >= pos_dec) {
       SHERPA_ONNX_LOGE(
-          "audio8-asr-infinite: the decoder cache needs a roll of %lld slots "
-          "but only %lld are cached",
-          static_cast<long long>(shift), static_cast<long long>(pos_dec));
+          "audio8-asr-infinite: the decoder cache needs a roll of %" PRIi64
+          " slots "
+          "but only %" PRIi64 " are cached",
+          static_cast<int64_t>(shift), static_cast<int64_t>(pos_dec));
       SHERPA_ONNX_EXIT(-1);
     }
     return shift;

@@ -71,6 +71,7 @@ from sherpa_onnx.lib._sherpa_onnx import (
     OfflineWhisperModelConfig,
     OfflineZipformerAudioTaggingModelConfig,
     OfflineZipformerCtcModelConfig,
+    OnlineAudio8AsrInfiniteModelConfig,
     OnlinePunctuation,
     OnlinePunctuationConfig,
     OnlinePunctuationModelConfig,

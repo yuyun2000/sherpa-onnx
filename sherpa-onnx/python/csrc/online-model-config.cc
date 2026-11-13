@@ -10,6 +10,7 @@
 #include "sherpa-onnx/csrc/online-model-config.h"
 #include "sherpa-onnx/csrc/online-transducer-model-config.h"
 #include "sherpa-onnx/csrc/provider-config.h"
+#include "sherpa-onnx/python/csrc/online-audio8-asr-infinite-model-config.h"
 #include "sherpa-onnx/python/csrc/online-nemo-ctc-model-config.h"
 #include "sherpa-onnx/python/csrc/online-paraformer-model-config.h"
 #include "sherpa-onnx/python/csrc/online-t-one-ctc-model-config.h"
@@ -36,6 +37,8 @@ Args:
     Config for the NeMo CTC model (optional).
   t_one_ctc:
     Config for the T-one CTC model (optional).
+  audio8_asr_infinite:
+    Config for the streaming Audio8-ASR-Infinite model (optional).
   provider_config:
     Config for the inference provider (optional).
   tokens:
@@ -61,6 +64,7 @@ void PybindOnlineModelConfig(py::module *m) {
   PybindOnlineZipformer2CtcModelConfig(m);
   PybindOnlineNeMoCtcModelConfig(m);
   PybindOnlineToneCtcModelConfig(m);
+  PybindOnlineAudio8AsrInfiniteModelConfig(m);
   PybindProviderConfig(m);
 
   using PyClass = OnlineModelConfig;
@@ -70,9 +74,10 @@ void PybindOnlineModelConfig(py::module *m) {
                     const OnlineWenetCtcModelConfig &,
                     const OnlineZipformer2CtcModelConfig &,
                     const OnlineNeMoCtcModelConfig &,
-                    const OnlineToneCtcModelConfig &, const ProviderConfig &,
-                    const std::string &, int32_t, int32_t, bool,
-                    const std::string &, const std::string &,
+                    const OnlineToneCtcModelConfig &,
+                    const OnlineAudio8AsrInfiniteModelConfig &,
+                    const ProviderConfig &, const std::string &, int32_t,
+                    int32_t, bool, const std::string &, const std::string &,
                     const std::string &>(),
            py::arg("transducer") = OnlineTransducerModelConfig(),
            py::arg("paraformer") = OnlineParaformerModelConfig(),
@@ -80,6 +85,8 @@ void PybindOnlineModelConfig(py::module *m) {
            py::arg("zipformer2_ctc") = OnlineZipformer2CtcModelConfig(),
            py::arg("nemo_ctc") = OnlineNeMoCtcModelConfig(),
            py::arg("t_one_ctc") = OnlineToneCtcModelConfig(),
+           py::arg("audio8_asr_infinite") =
+               OnlineAudio8AsrInfiniteModelConfig(),
            py::arg("provider_config") = ProviderConfig(), py::arg("tokens"),
            py::arg("num_threads"), py::arg("warm_up") = 0,
            py::arg("debug") = false, py::arg("model_type") = "",
@@ -91,6 +98,7 @@ void PybindOnlineModelConfig(py::module *m) {
       .def_readwrite("zipformer2_ctc", &PyClass::zipformer2_ctc)
       .def_readwrite("nemo_ctc", &PyClass::nemo_ctc)
       .def_readwrite("t_one_ctc", &PyClass::t_one_ctc)
+      .def_readwrite("audio8_asr_infinite", &PyClass::audio8_asr_infinite)
       .def_readwrite("provider_config", &PyClass::provider_config)
       .def_readwrite("tokens", &PyClass::tokens)
       .def_readwrite("num_threads", &PyClass::num_threads)

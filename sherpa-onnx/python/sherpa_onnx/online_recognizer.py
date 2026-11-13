@@ -7,6 +7,7 @@ from sherpa_onnx.lib._sherpa_onnx import (
     EndpointConfig,
     FeatureExtractorConfig,
     HomophoneReplacerConfig,
+    OnlineAudio8AsrInfiniteModelConfig,
     OnlineCtcFstDecoderConfig,
     OnlineLMConfig,
     OnlineModelConfig,
@@ -1025,6 +1026,169 @@ class OnlineRecognizer(object):
                 lexicon=hr_lexicon,
                 rule_fsts=hr_rule_fsts,
             ),
+        )
+
+        self.recognizer = _Recognizer(recognizer_config)
+        self.config = recognizer_config
+        return self
+
+    @classmethod
+    def from_audio8_asr_infinite(
+        cls,
+        tokenizer: str,
+        model_dir: str = "",
+        encoder: str = "",
+        decoder0: str = "",
+        decoder1: str = "",
+        decoder2: str = "",
+        frontend_trim0: str = "",
+        frontend_trim2: str = "",
+        frame_len: int = 8,
+        delay_ms: int = 480,
+        max_total_len: int = 512,
+        language: str = "zh",
+        enc_window: int = 750,
+        max_new_tokens: int = 0,
+        num_threads: int = 1,
+        sample_rate: int = 16000,
+        feature_dim: int = 128,
+        enable_endpoint_detection: bool = False,
+        rule1_min_trailing_silence: float = 2.4,
+        rule2_min_trailing_silence: float = 1.2,
+        rule3_min_utterance_length: float = 20.0,
+        decoding_method: str = "greedy_search",
+        debug: bool = False,
+        provider: str = "cpu",
+    ):
+        """
+        Create a streaming recognizer for Audio8-ASR-Infinite, a token-clock
+        LLM ASR model: one text token is emitted for every
+        ``frame_len * 20 ms`` of audio, independently of the audio content.
+
+        Set ``model_dir`` and leave the per-graph paths empty unless the files
+        have non-standard names. This model family has no ``tokens.txt``; it
+        reads its tokenizer from the ``tokenizer`` directory instead.
+
+        Args:
+          tokenizer:
+            Path to the tokenizer directory (``vocab.json``, ``merges.txt``,
+            ``tokenizer_config.json``).
+          model_dir:
+            Path to the directory holding ``tower.onnx``,
+            ``decoder_{0,1,2}.onnx`` and ``frontend_trim{0,2}.onnx``.
+          encoder:
+            Path to ``tower.onnx`` (audio tower + frame grouping + projector).
+            Resolved against ``model_dir`` if empty.
+          decoder0:
+            Path to ``decoder_0.onnx`` (decoder layers 0-11). An int8 copy
+            works as well.
+          decoder1:
+            Path to ``decoder_1.onnx`` (decoder layers 12-23).
+          decoder2:
+            Path to ``decoder_2.onnx`` (decoder layers 24-35 + lm_head).
+          frontend_trim0:
+            Path to ``frontend_trim0.onnx``. It is used by the first window of
+            a stream.
+          frontend_trim2:
+            Path to ``frontend_trim2.onnx``. It is used by every later window.
+          frame_len:
+            Number of tower frames per text token: 4 (80 ms), 6 (120 ms) or
+            8 (160 ms). It must match the exported graphs.
+          delay_ms:
+            Transcription delay in milliseconds. It must be a positive
+            multiple of ``frame_len * 20`` ms.
+          max_total_len:
+            Number of KV cache slots of the decoder graphs.
+          language:
+            Prompt language: ``zh`` or ``en``.
+          enc_window:
+            Tower attention sliding window, in tower frames (750 = 15 s).
+          max_new_tokens:
+            Safety cap on the number of generated tokens of one segment.
+            0 means unlimited.
+          num_threads:
+            Number of threads for neural network computation.
+          sample_rate:
+            Sample rate of the input audio. It must be 16000.
+          feature_dim:
+            Feature dimension; Audio8-ASR-Infinite uses 128.
+          enable_endpoint_detection:
+            True to enable endpoint detection. False to disable endpoint
+            detection. The model has no blank token, so endpointing falls back
+            to an energy-based detector that can cut a sentence at a long
+            pause; keep it False unless you reset the stream yourself.
+          rule1_min_trailing_silence:
+            Used only when enable_endpoint_detection is True. If the duration
+            of trailing silence in seconds is larger than this value, we assume
+            an endpoint is detected.
+          rule2_min_trailing_silence:
+            Used only when enable_endpoint_detection is True. If we have decoded
+            something that is nonsilence and if the duration of trailing silence
+            in seconds is larger than this value, we assume an endpoint is
+            detected.
+          rule3_min_utterance_length:
+            Used only when enable_endpoint_detection is True. If the utterance
+            length in seconds is larger than this value, we assume an endpoint
+            is detected.
+          decoding_method:
+            The only valid value is ``greedy_search``.
+          debug:
+            True to print the window schedule, the cache geometry and each
+            clock step.
+          provider:
+            onnxruntime execution provider, e.g. ``cpu``.
+        """
+        self = cls.__new__(cls)
+        # Unlike the other families, `tokenizer` is a directory.
+        assert Path(tokenizer).is_dir(), f"{tokenizer} does not exist"
+
+        audio8 = OnlineAudio8AsrInfiniteModelConfig(
+            model_dir=model_dir,
+            encoder=encoder,
+            decoder0=decoder0,
+            decoder1=decoder1,
+            decoder2=decoder2,
+            frontend_trim0=frontend_trim0,
+            frontend_trim2=frontend_trim2,
+            tokenizer=tokenizer,
+            frame_len=frame_len,
+            delay_ms=delay_ms,
+            max_total_len=max_total_len,
+            language=language,
+            enc_window=enc_window,
+            max_new_tokens=max_new_tokens,
+            debug=debug,
+        )
+
+        provider_config = ProviderConfig(provider=provider)
+
+        # This family has no tokens.txt: it loads its tokenizer from the
+        # `tokenizer` directory, so `tokens` is left empty.
+        model_config = OnlineModelConfig(
+            audio8_asr_infinite=audio8,
+            provider_config=provider_config,
+            tokens="",
+            num_threads=num_threads,
+            debug=debug,
+        )
+
+        feat_config = FeatureExtractorConfig(
+            sampling_rate=sample_rate,
+            feature_dim=feature_dim,
+        )
+
+        endpoint_config = EndpointConfig(
+            rule1_min_trailing_silence=rule1_min_trailing_silence,
+            rule2_min_trailing_silence=rule2_min_trailing_silence,
+            rule3_min_utterance_length=rule3_min_utterance_length,
+        )
+
+        recognizer_config = OnlineRecognizerConfig(
+            feat_config=feat_config,
+            model_config=model_config,
+            endpoint_config=endpoint_config,
+            enable_endpoint=enable_endpoint_detection,
+            decoding_method=decoding_method,
         )
 
         self.recognizer = _Recognizer(recognizer_config)

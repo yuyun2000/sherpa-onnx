@@ -296,6 +296,39 @@ jobs:
           rm -rf sherpa-onnx-funasr-*
           rm -v ./$name
 
+      # Audio8-ASR-Infinite is a streaming LLM ASR model whose int8 bundle is
+      # several GB, and its release does not exist yet, so this step is
+      # optional. Remove `continue-on-error: true` once the tarball is published.
+      - name: Test Audio8 ASR Infinite (optional)
+        shell: bash
+        continue-on-error: true
+        run: |
+          name=audio8-asr-infinite-cxx-api
+          g++ -std=c++17 -o $name ./cxx-api-examples/$name.cc \
+            -I ./build/install/include \
+            -L ./build/install/lib/ \
+            -l sherpa-onnx-cxx-api \
+            -l sherpa-onnx-c-api \
+            -l onnxruntime
+
+          ls -lh $name
+
+          dir=sherpa-onnx-audio8-asr-infinite-4b-int8
+          base=https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models
+          if ! curl -fSL -O "$base/$dir.tar.bz2"; then
+            echo "$dir.tar.bz2 is not available yet; skipping the end-to-end run"
+            exit 0
+          fi
+          tar xvf $dir.tar.bz2
+          rm $dir.tar.bz2
+
+          echo "---"
+
+          ./$name
+
+          rm -rf sherpa-onnx-audio8-asr-infinite-*
+          rm -v ./$name
+
       - name: Test MedASR CTC
         shell: bash
         run: |

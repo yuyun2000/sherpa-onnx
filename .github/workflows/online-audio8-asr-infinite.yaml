@@ -1,0 +1,150 @@
+name: online-audio8-asr-infinite
+
+# Audio8-ASR-Infinite is a streaming, token-clock LLM ASR model (a 32-layer
+# Voxtral Realtime audio tower + a 36-layer Qwen2.5-3B decoder).  The int8
+# bundle is ~4.4 GB, so this workflow is a single-OS job and the model download
+# and the end-to-end run are allowed to fail until the release exists (see the
+# comment on the "Download the int8 model" step).
+#
+# The unit test does not need any model file, so it always runs.
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/online-audio8-asr-infinite.yaml'
+      - 'cmake/**'
+      - 'sherpa-onnx/csrc/online-audio8-asr-infinite-*'
+      - 'sherpa-onnx/csrc/online-stream-audio8-asr-infinite.*'
+      - 'sherpa-onnx/csrc/online-recognizer-audio8-asr-infinite-*'
+      - 'sherpa-onnx/csrc/online-model-config.*'
+      - 'sherpa-onnx/csrc/online-stream.h'
+      - 'sherpa-onnx/c-api/*'
+      - 'cxx-api-examples/audio8-asr-infinite-cxx-api.cc'
+
+  pull_request:
+    paths:
+      - '.github/workflows/online-audio8-asr-infinite.yaml'
+      - 'cmake/**'
+      - 'sherpa-onnx/csrc/online-audio8-asr-infinite-*'
+      - 'sherpa-onnx/csrc/online-stream-audio8-asr-infinite.*'
+      - 'sherpa-onnx/csrc/online-recognizer-audio8-asr-infinite-*'
+      - 'sherpa-onnx/csrc/online-model-config.*'
+      - 'sherpa-onnx/csrc/online-stream.h'
+      - 'sherpa-onnx/c-api/*'
+      - 'cxx-api-examples/audio8-asr-infinite-cxx-api.cc'
+
+  workflow_dispatch:
+
+concurrency:
+  group: online-audio8-asr-infinite-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build and test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Update version
+        shell: bash
+        run: |
+          ./new-release.sh
+          git diff .
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ubuntu-latest-online-audio8-asr-infinite
+
+      - name: Build sherpa-onnx with tests
+        shell: bash
+        run: |
+          export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+          export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+          cmake --version
+
+          mkdir build
+          cd build
+
+          cmake \
+            -D CMAKE_BUILD_TYPE=Release \
+            -D BUILD_SHARED_LIBS=ON \
+            -D SHERPA_ONNX_ENABLE_TESTS=ON \
+            -D CMAKE_INSTALL_PREFIX=./install \
+            ..
+
+          make -j2 install
+
+          ls -lh install/lib
+          ls -lh install/include
+
+      - name: Run the unit test
+        shell: bash
+        run: |
+          # Pure logic only: the gear geometry, the window schedule and the
+          # config validation.  No model file is needed.
+          cd build
+          cmake --build . --target online-audio8-asr-infinite-model-config-test --parallel 2
+          ctest --output-on-failure --no-tests=error \
+            -R "^online-audio8-asr-infinite-model-config-test$"
+
+      - name: Build the cxx-api example
+        shell: bash
+        run: |
+          name=audio8-asr-infinite-cxx-api
+          g++ -std=c++17 -o $name ./cxx-api-examples/$name.cc \
+            -I ./build/install/include \
+            -L ./build/install/lib/ \
+            -l sherpa-onnx-cxx-api \
+            -l sherpa-onnx-c-api \
+            -l onnxruntime
+
+          ls -lh $name
+
+      - name: Build the c-api example
+        shell: bash
+        run: |
+          # Only compiled here: the online C API of this family is a new
+          # struct, and it must stay usable from plain C.
+          name=audio8-asr-infinite-c-api
+          gcc -o $name ./c-api-examples/$name.c \
+            -I ./build/install/include \
+            -L ./build/install/lib/ \
+            -l sherpa-onnx-c-api \
+            -l onnxruntime
+
+          ls -lh $name
+
+      # The release of the int8 bundle does not exist yet and it is ~4.4 GB,
+      # so this step is optional: it downloads the tarball if it is there and
+      # runs the example on it, and a failure here does not fail the workflow.
+      # Once the release is published, remove `continue-on-error: true`.
+      #
+      # The example must print
+      #   昨天是 Monday， today is礼拜二，the day after tomorrow是星期三。
+      - name: Download the int8 model and run the example (optional)
+        shell: bash
+        continue-on-error: true
+        run: |
+          dir=sherpa-onnx-audio8-asr-infinite-0.1b-int8
+
+          # The models are also mirrored on HuggingFace; switch `base` to the
+          # k2-fsa release once the artifact is uploaded there.
+          base=https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models
+          if ! curl -fSL -O "$base/$dir.tar.bz2"; then
+            echo "$dir.tar.bz2 is not available yet; skipping the end-to-end run"
+            exit 0
+          fi
+          tar xvf $dir.tar.bz2
+          rm $dir.tar.bz2
+
+          echo "---"
+          ls -lh $dir
+
+          ./audio8-asr-infinite-cxx-api

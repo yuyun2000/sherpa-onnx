@@ -281,3 +281,7 @@ if(SHERPA_ONNX_ENABLE_TTS)
   add_executable(offline-tts-piper-cxx-api ./offline-tts-piper-cxx-api.cc)
   target_link_libraries(offline-tts-piper-cxx-api sherpa-onnx-cxx-api)
 endif()
+
+
+add_executable(audio8-asr-infinite-cxx-api ./audio8-asr-infinite-cxx-api.cc)
+target_link_libraries(audio8-asr-infinite-cxx-api sherpa-onnx-cxx-api)

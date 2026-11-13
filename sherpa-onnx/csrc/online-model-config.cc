@@ -18,6 +18,7 @@ void OnlineModelConfig::Register(ParseOptions *po) {
   zipformer2_ctc.Register(po);
   nemo_ctc.Register(po);
   t_one_ctc.Register(po);
+  audio8_asr_infinite.Register(po);
   provider_config.Register(po);
 
   po->Register("tokens", &tokens, "Path to tokens.txt");
@@ -144,6 +145,12 @@ bool OnlineModelConfig::Validate() const {
     }
   }
 
+  // Audio8-ASR-Infinite loads its tokenizer from a directory and does not use
+  // tokens.txt, so it is validated before the generic tokens checks.
+  if (audio8_asr_infinite.IsSet()) {
+    return provider_config.Validate() && audio8_asr_infinite.Validate();
+  }
+
   if (!tokens_buf.empty() && FileExists(tokens)) {
     SHERPA_ONNX_LOGE(
         "you can not provide a tokens_buf and a tokens file: '%s', "
@@ -205,6 +212,7 @@ std::string OnlineModelConfig::ToString() const {
   os << "zipformer2_ctc=" << zipformer2_ctc.ToString() << ", ";
   os << "nemo_ctc=" << nemo_ctc.ToString() << ", ";
   os << "t_one_ctc=" << t_one_ctc.ToString() << ", ";
+  os << "audio8_asr_infinite=" << audio8_asr_infinite.ToString() << ", ";
   os << "provider_config=" << provider_config.ToString() << ", ";
   os << "tokens=\"" << tokens << "\", ";
   os << "num_threads=" << num_threads << ", ";

@@ -23,6 +23,7 @@
 #include "kaldifst/csrc/kaldi-fst-io.h"
 #include "sherpa-onnx/csrc/fst-utils.h"
 #include "sherpa-onnx/csrc/macros.h"
+#include "sherpa-onnx/csrc/online-recognizer-audio8-asr-infinite-impl.h"
 #include "sherpa-onnx/csrc/online-recognizer-ctc-impl.h"
 #include "sherpa-onnx/csrc/online-recognizer-paraformer-impl.h"
 #include "sherpa-onnx/csrc/online-recognizer-transducer-impl.h"
@@ -102,6 +103,10 @@ std::unique_ptr<OnlineRecognizerImpl> OnlineRecognizerImpl::Create(
     SHERPA_ONNX_EXIT(-1);
     return nullptr;
 #endif
+  }
+
+  if (config.model_config.audio8_asr_infinite.IsSet()) {
+    return std::make_unique<OnlineRecognizerAudio8AsrInfiniteImpl>(config);
   }
 
   if (!config.model_config.transducer.encoder.empty()) {
@@ -192,6 +197,10 @@ std::unique_ptr<OnlineRecognizerImpl> OnlineRecognizerImpl::Create(
     SHERPA_ONNX_EXIT(-1);
     return nullptr;
 #endif
+  }
+
+  if (config.model_config.audio8_asr_infinite.IsSet()) {
+    return std::make_unique<OnlineRecognizerAudio8AsrInfiniteImpl>(mgr, config);
   }
 
   if (!config.model_config.transducer.encoder.empty()) {

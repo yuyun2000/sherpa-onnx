@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "sherpa-onnx/csrc/online-audio8-asr-infinite-model-config.h"
 #include "sherpa-onnx/csrc/online-nemo-ctc-model-config.h"
 #include "sherpa-onnx/csrc/online-paraformer-model-config.h"
 #include "sherpa-onnx/csrc/online-t-one-ctc-model-config.h"
@@ -23,6 +24,7 @@ struct OnlineModelConfig {
   OnlineZipformer2CtcModelConfig zipformer2_ctc;
   OnlineNeMoCtcModelConfig nemo_ctc;
   OnlineToneCtcModelConfig t_one_ctc;
+  OnlineAudio8AsrInfiniteModelConfig audio8_asr_infinite;
   ProviderConfig provider_config;
   std::string tokens;
   int32_t num_threads = 1;
@@ -59,6 +61,8 @@ struct OnlineModelConfig {
                     const OnlineZipformer2CtcModelConfig &zipformer2_ctc,
                     const OnlineNeMoCtcModelConfig &nemo_ctc,
                     const OnlineToneCtcModelConfig &t_one_ctc,
+                    const OnlineAudio8AsrInfiniteModelConfig
+                        &audio8_asr_infinite,
                     const ProviderConfig &provider_config,
                     const std::string &tokens, int32_t num_threads,
                     int32_t warm_up, bool debug, const std::string &model_type,
@@ -70,6 +74,7 @@ struct OnlineModelConfig {
         zipformer2_ctc(zipformer2_ctc),
         nemo_ctc(nemo_ctc),
         t_one_ctc(t_one_ctc),
+        audio8_asr_infinite(audio8_asr_infinite),
         provider_config(provider_config),
         tokens(tokens),
         num_threads(num_threads),

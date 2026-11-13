@@ -36,8 +36,11 @@ class OnlineStream {
                      the range [-1, 1].
      @param n Number of entries in waveform
    */
-  void AcceptWaveform(int32_t sampling_rate, const float *waveform,
-                      int32_t n) const;
+  // Virtual so that a model whose frontend is part of the ONNX bundle (e.g.
+  // online-audio8-asr-infinite, which consumes raw PCM) can keep the samples
+  // itself instead of using the kaldi-native-fbank path.
+  virtual void AcceptWaveform(int32_t sampling_rate, const float *waveform,
+                              int32_t n) const;
 
   /**
    * InputFinished() tells the class you won't be providing any
@@ -45,7 +48,7 @@ class OnlineStream {
    * of features, in the case where snip-edges == false; it also
    * affects the return value of IsLastFrame().
    */
-  void InputFinished() const;
+  virtual void InputFinished() const;
 
   int32_t NumFramesReady() const;
 

@@ -98,6 +98,8 @@ set(sources
   offline-whisper-timestamp-rules.cc
   offline-zipformer-ctc-model-config.cc
   offline-zipformer-ctc-model.cc
+  online-audio8-asr-infinite-model-config.cc
+  online-audio8-asr-infinite-model.cc
   online-conformer-transducer-model.cc
   online-ctc-fst-decoder-config.cc
   online-ctc-fst-decoder.cc
@@ -112,9 +114,11 @@ set(sources
   online-nemo-ctc-model.cc
   online-paraformer-model-config.cc
   online-paraformer-model.cc
+  online-recognizer-audio8-asr-infinite-impl.cc
   online-recognizer-impl.cc
   online-recognizer.cc
   online-rnn-lm.cc
+  online-stream-audio8-asr-infinite.cc
   online-stream.cc
   online-t-one-ctc-model-config.cc
   online-t-one-ctc-model.cc

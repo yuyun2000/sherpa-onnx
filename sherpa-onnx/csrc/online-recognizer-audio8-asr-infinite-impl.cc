@@ -114,7 +114,11 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::InitFeatConfig() {
   // consume raw PCM), so the kaldi-native-fbank extractor of OnlineStream is
   // never used.  Only the sampling rate matters, and it is 16 kHz.
   config_.feat_config.sampling_rate = kSampleRate;
-  config_.feat_config.feature_dim = 128;
+  // Leave the mel dimension at the default: constructing a 128-bin whisper
+  // filter bank only prints "mel bin contains no FFT bin" warnings, and the
+  // features actually come from frontend_trim{0,2}.onnx.  The stream gets a
+  // default FeatureExtractorConfig() for the same reason.
+  config_.feat_config.feature_dim = 80;
 }
 
 void OnlineRecognizerAudio8AsrInfiniteImpl::InitPromptIds() {
@@ -182,14 +186,21 @@ OnlineStreamAudio8AsrInfinite
 
 std::unique_ptr<OnlineStream>
 OnlineRecognizerAudio8AsrInfiniteImpl::CreateStream() const {
+  // The stream only needs the sampling rate; features are computed by the ONNX
+  // frontend, so no kaldi-native-fbank extractor is involved.
+  FeatureExtractorConfig feat_config;
+  feat_config.sampling_rate = kSampleRate;
   return std::make_unique<OnlineStreamAudio8AsrInfinite>(
-      &model_, config_.feat_config, bos_id_, language_id_, streaming_pad_id_);
+      &model_, feat_config, bos_id_, language_id_, streaming_pad_id_);
 }
 
 bool OnlineRecognizerAudio8AsrInfiniteImpl::IsReady(OnlineStream *s) const {
   const auto &c = config_.model_config.audio8_asr_infinite;
-  if (c.max_new_tokens > 0 &&
-      Cast(s)->State().num_generated >= c.max_new_tokens) {
+  // Per-stream override: stream->SetOption("max_new_tokens", "20").
+  const int32_t max_new_tokens = s->GetOptionInt("max_new_tokens",
+                                                 c.max_new_tokens);
+  if (max_new_tokens > 0 &&
+      Cast(s)->State().num_generated >= max_new_tokens) {
     // The safety cap stopped this segment: report "not ready" so that callers
     // do not spin on DecodeStream().
     return false;

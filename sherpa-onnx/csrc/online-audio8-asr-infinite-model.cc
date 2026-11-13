@@ -542,7 +542,28 @@ class OnlineAudio8AsrInfiniteModel::Impl {
     }
   }
 
+  static std::string GetModelType(Ort::Session *sess,
+                                  OrtAllocator *allocator) {
+    auto meta = sess->GetModelMetadata();
+    auto value = meta.LookupCustomMetadataMapAllocated("model_type", allocator);
+    return value ? std::string(value.get()) : std::string();
+  }
+
   void InitTower() {
+    // Refuse a graph that was not exported for this model: the file names are
+    // easy to mix up, and a wrong tower only shows up as garbled text later.
+    const std::string model_type =
+        GetModelType(tower_sess_.get(), allocator_);
+    if (model_type != "audio8-asr-infinite") {
+      SHERPA_ONNX_LOGE(
+          "The tower does not look like an Audio8-ASR-Infinite model: expected "
+          "model_type=audio8-asr-infinite in its metadata, got '%s'. Please "
+          "re-export or stamp it with scripts/audio8-asr-infinite/"
+          "stamp-metadata.py",
+          model_type.c_str());
+      SHERPA_ONNX_EXIT(-1);
+    }
+
     GetInputNames(tower_sess_.get(), &tower_input_names_,
                   &tower_input_ptrs_);
     GetOutputNames(tower_sess_.get(), &tower_output_names_,

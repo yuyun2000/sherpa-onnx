@@ -126,6 +126,40 @@ static sherpa_onnx::OnlineRecognizerConfig GetOnlineRecognizerConfig(
   recognizer_config.model_config.t_one_ctc.model =
       SHERPA_ONNX_OR(config->model_config.t_one_ctc.model, "");
 
+  recognizer_config.model_config.audio8_asr_infinite.model_dir =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.model_dir, "");
+  recognizer_config.model_config.audio8_asr_infinite.encoder =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.encoder, "");
+  recognizer_config.model_config.audio8_asr_infinite.decoder0 =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.decoder0, "");
+  recognizer_config.model_config.audio8_asr_infinite.decoder1 =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.decoder1, "");
+  recognizer_config.model_config.audio8_asr_infinite.decoder2 =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.decoder2, "");
+  recognizer_config.model_config.audio8_asr_infinite.frontend_trim0 =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.frontend_trim0,
+                     "");
+  recognizer_config.model_config.audio8_asr_infinite.frontend_trim2 =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.frontend_trim2,
+                     "");
+  recognizer_config.model_config.audio8_asr_infinite.tokenizer =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.tokenizer, "");
+  recognizer_config.model_config.audio8_asr_infinite.frame_len =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.frame_len, 8);
+  recognizer_config.model_config.audio8_asr_infinite.delay_ms =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.delay_ms, 480);
+  recognizer_config.model_config.audio8_asr_infinite.max_total_len =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.max_total_len,
+                     512);
+  recognizer_config.model_config.audio8_asr_infinite.language =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.language, "zh");
+  recognizer_config.model_config.audio8_asr_infinite.enc_window =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.enc_window, 750);
+  recognizer_config.model_config.audio8_asr_infinite.max_new_tokens =
+      SHERPA_ONNX_OR(config->model_config.audio8_asr_infinite.max_new_tokens,
+                     0);
+  recognizer_config.model_config.audio8_asr_infinite.debug =
+      config->model_config.audio8_asr_infinite.debug != 0;
   recognizer_config.model_config.num_threads =
       GetNumThreads(config->model_config.num_threads);
   recognizer_config.model_config.provider_config.provider =

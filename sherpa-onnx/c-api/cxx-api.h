@@ -94,6 +94,50 @@ struct OnlineToneCtcModelConfig {
 };
 
 /**
+ * @brief Streaming Audio8-ASR-Infinite model files and options.
+ *
+ * Audio8-ASR-Infinite is a token-clock LLM ASR model: one text token is
+ * emitted for every `frame_len * 20 ms` of audio. Set `model_dir` and leave the
+ * per-graph paths empty unless the files are named differently.
+ *
+ * The tokenizer is a directory (with `vocab.json`, `merges.txt` and
+ * `tokenizer_config.json`), not a `tokens.txt` file. An int8 copy of the
+ * decoders works as well.
+ */
+struct OnlineAudio8AsrInfiniteModelConfig {
+  /** Directory holding the graphs below. It fills in the empty paths. */
+  std::string model_dir;
+  /** Audio tower + frame grouping + projector (tower.onnx). */
+  std::string encoder;
+  /** Decoder layers 0-11 (decoder_0.onnx). */
+  std::string decoder0;
+  /** Decoder layers 12-23 (decoder_1.onnx). */
+  std::string decoder1;
+  /** Decoder layers 24-35 + lm_head (decoder_2.onnx). */
+  std::string decoder2;
+  /** PCM window -> tower frames, no trim (first window of a stream). */
+  std::string frontend_trim0;
+  /** PCM window -> tower frames, trim 2 (every later window). */
+  std::string frontend_trim2;
+  /** Tokenizer directory (vocab.json, merges.txt, tokenizer_config.json). */
+  std::string tokenizer;
+  /** Tower frames per text token: 4 (80 ms), 6 (120 ms) or 8 (160 ms). */
+  int32_t frame_len = 8;
+  /** Transcription delay in milliseconds; a multiple of frame_len * 20 ms. */
+  int32_t delay_ms = 480;
+  /** KV cache slots of the decoder graphs. */
+  int32_t max_total_len = 512;
+  /** Prompt language: "zh" or "en". */
+  std::string language = "zh";
+  /** Tower attention sliding window, in tower frames (750 = 15 s). */
+  int32_t enc_window = 750;
+  /** Safety cap on the generated tokens of one segment. 0 means unlimited. */
+  int32_t max_new_tokens = 0;
+  /** Enable verbose debug logging. */
+  bool debug = false;
+};
+
+/**
  * @brief Acoustic model configuration for streaming ASR.
  *
  * Configure exactly one model family. If multiple model families are set, one
@@ -129,6 +173,8 @@ struct OnlineModelConfig {
   OnlineNemoCtcModelConfig nemo_ctc;
   /** Streaming T-One CTC configuration. */
   OnlineToneCtcModelConfig t_one_ctc;
+  /** Streaming Audio8-ASR-Infinite configuration. */
+  OnlineAudio8AsrInfiniteModelConfig audio8_asr_infinite;
   /** Token file path. */
   std::string tokens;
   /** Number of inference threads. */

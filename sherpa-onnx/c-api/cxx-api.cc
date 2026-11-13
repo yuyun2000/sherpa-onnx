@@ -104,6 +104,25 @@ OnlineRecognizer OnlineRecognizer::Create(
   c.model_config.nemo_ctc.model = config.model_config.nemo_ctc.model.c_str();
   c.model_config.t_one_ctc.model = config.model_config.t_one_ctc.model.c_str();
 
+  const auto &audio8 = config.model_config.audio8_asr_infinite;
+  c.model_config.audio8_asr_infinite.model_dir = audio8.model_dir.c_str();
+  c.model_config.audio8_asr_infinite.encoder = audio8.encoder.c_str();
+  c.model_config.audio8_asr_infinite.decoder0 = audio8.decoder0.c_str();
+  c.model_config.audio8_asr_infinite.decoder1 = audio8.decoder1.c_str();
+  c.model_config.audio8_asr_infinite.decoder2 = audio8.decoder2.c_str();
+  c.model_config.audio8_asr_infinite.frontend_trim0 =
+      audio8.frontend_trim0.c_str();
+  c.model_config.audio8_asr_infinite.frontend_trim2 =
+      audio8.frontend_trim2.c_str();
+  c.model_config.audio8_asr_infinite.tokenizer = audio8.tokenizer.c_str();
+  c.model_config.audio8_asr_infinite.frame_len = audio8.frame_len;
+  c.model_config.audio8_asr_infinite.delay_ms = audio8.delay_ms;
+  c.model_config.audio8_asr_infinite.max_total_len = audio8.max_total_len;
+  c.model_config.audio8_asr_infinite.language = audio8.language.c_str();
+  c.model_config.audio8_asr_infinite.enc_window = audio8.enc_window;
+  c.model_config.audio8_asr_infinite.max_new_tokens = audio8.max_new_tokens;
+  c.model_config.audio8_asr_infinite.debug = audio8.debug;
+
   c.model_config.tokens = config.model_config.tokens.c_str();
   c.model_config.num_threads = config.model_config.num_threads;
   c.model_config.provider = config.model_config.provider.c_str();

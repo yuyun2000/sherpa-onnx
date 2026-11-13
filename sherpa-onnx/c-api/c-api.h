@@ -229,6 +229,91 @@ typedef struct SherpaOnnxOnlineToneCtcModelConfig {
 } SherpaOnnxOnlineToneCtcModelConfig;
 
 /**
+ * @brief Configuration for the streaming Audio8-ASR-Infinite model.
+ *
+ * Audio8-ASR-Infinite is a token-clock LLM ASR model: a 32-layer Voxtral
+ * Realtime audio tower followed by a 36-layer Qwen2.5-3B decoder. One text
+ * token is emitted for every `frame_len * 20 ms` of audio, independently of the
+ * audio content.
+ *
+ * A model bundle contains the ONNX graphs exported from one checkpoint for
+ * exactly one "gear" = (@c frame_len, @c delay_ms):
+ *
+ * - `frontend_trim0.onnx`, `frontend_trim2.onnx`: PCM window -> 20 ms tower
+ *   frames. The first window of a stream uses trim 0, every later window uses
+ *   trim 2.
+ * - `tower.onnx`: audio tower + frame grouping + projector.
+ * - `decoder_0.onnx`, `decoder_1.onnx`, `decoder_2.onnx`: the decoder in three
+ *   12-layer chunks. An int8 copy of the decoders works as well.
+ *
+ * Only one gear is supported per recognizer instance.
+ *
+ * The tokenizer is a directory, not a `tokens.txt` file, so @c tokens of
+ * SherpaOnnxOnlineModelConfig is not used by this model family.
+ *
+ * @note Set @c model_dir and leave the per-graph paths empty unless you use
+ * non-standard file names; empty paths are resolved against @c model_dir.
+ */
+typedef struct SherpaOnnxOnlineAudio8AsrInfiniteModelConfig {
+  /**
+   * Path to the directory holding tower.onnx, decoder_{0,1,2}.onnx and
+   * frontend_trim{0,2}.onnx. It fills in any of the per-graph paths that are
+   * left empty.
+   */
+  const char *model_dir;
+  /** Path to tower.onnx (audio tower + frame grouping + projector). */
+  const char *encoder;
+  /** Path to decoder_0.onnx (decoder layers 0-11). */
+  const char *decoder0;
+  /** Path to decoder_1.onnx (decoder layers 12-23). */
+  const char *decoder1;
+  /** Path to decoder_2.onnx (decoder layers 24-35 + lm_head). */
+  const char *decoder2;
+  /** Path to frontend_trim0.onnx (used by the first window of a stream). */
+  const char *frontend_trim0;
+  /** Path to frontend_trim2.onnx (used by every later window). */
+  const char *frontend_trim2;
+  /**
+   * Path to the tokenizer directory (with `vocab.json`, `merges.txt` and
+   * `tokenizer_config.json`).
+   */
+  const char *tokenizer;
+  /**
+   * Number of tower frames per text token: 4 (80 ms), 6 (120 ms) or 8
+   * (160 ms). 0 means the default, 8. It must match the exported graphs.
+   */
+  int32_t frame_len;
+  /**
+   * Transcription delay in milliseconds. 0 means the default, 480. It must be
+   * a positive multiple of @c frame_len * 20 ms.
+   */
+  int32_t delay_ms;
+  /**
+   * Number of KV cache slots of the decoder graphs. 0 means the default, 512.
+   * It is validated against the exported graphs and used to roll the decoder
+   * cache on long sessions.
+   */
+  int32_t max_total_len;
+  /** Prompt language: "zh" or "en". NULL or empty means the default, "zh". */
+  const char *language;
+  /**
+   * Tower attention sliding window, in tower frames. 0 means the default, 750
+   * (= 15 s). It must match `audio_config.sliding_window` of the checkpoint.
+   */
+  int32_t enc_window;
+  /**
+   * Safety cap on the number of generated tokens of one segment. 0 means
+   * unlimited, which is what a real streaming session wants.
+   */
+  int32_t max_new_tokens;
+  /**
+   * Non-zero to log the window schedule, the cache geometry and each clock
+   * step.
+   */
+  int32_t debug;
+} SherpaOnnxOnlineAudio8AsrInfiniteModelConfig;
+
+/**
  * @brief Model configuration shared by streaming ASR recognizers.
  *
  * Zero-initialize this struct before use, then fill in the sub-config for the
@@ -237,7 +322,7 @@ typedef struct SherpaOnnxOnlineToneCtcModelConfig {
  *
  * Exactly one model family should be configured for each recognizer. For
  * example, set only one of @c transducer, @c paraformer, @c zipformer2_ctc,
- * @c nemo_ctc, or @c t_one_ctc.
+ * @c nemo_ctc, @c t_one_ctc, or @c audio8_asr_infinite.
  *
  * If multiple model families are configured at the same time, the
  * implementation will choose one of them, and which one is used is
@@ -280,6 +365,8 @@ typedef struct SherpaOnnxOnlineModelConfig {
   SherpaOnnxOnlineNemoCtcModelConfig nemo_ctc;
   /** Streaming T-One CTC model files. */
   SherpaOnnxOnlineToneCtcModelConfig t_one_ctc;
+  /** Streaming Audio8-ASR-Infinite model files and options. */
+  SherpaOnnxOnlineAudio8AsrInfiniteModelConfig audio8_asr_infinite;
 } SherpaOnnxOnlineModelConfig;
 
 /**

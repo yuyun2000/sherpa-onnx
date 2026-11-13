@@ -39,6 +39,13 @@ struct Audio8InfiniteStreamState {
   int64_t num_received = 0;   // total user samples accepted
   bool input_finished = false;
 
+  // A segment always starts with `left_pad_samples` of digital silence, like
+  // the reference stream does at t = 0.  Every ResetState() inserts another
+  // such pad, so virtual position `v` maps to user sample
+  // `v - left_pad_samples - extra_pad_samples`.
+  int64_t extra_pad_samples = 0;
+  int64_t zero_pad_end = 0;  // virtual positions below this are zeros
+
   // ---- clocks ------------------------------------------------------------
   int64_t pos_enc = 0;  // absolute tower frames consumed
   int64_t pos_dec = 0;  // absolute text positions consumed
@@ -64,6 +71,7 @@ struct Audio8InfiniteStreamState {
   int64_t num_silence_samples = 0;
   int64_t silence_scanned_upto = 0;  // user sample index
   int64_t segment_start_virtual = 0;
+  int64_t segment_start_user = 0;  // user sample index of the segment start
 };
 
 // OnlineStream for Audio8-ASR-Infinite.
@@ -110,7 +118,8 @@ class OnlineStreamAudio8AsrInfinite : public OnlineStream {
   void FillWindow(int64_t start, int64_t end, std::vector<float> *out) const;
 
   // Clears the model state (caches, clocks, text) and re-arms the schedule so
-  // that the next window covers the most recent prefill_tokens of audio.
+  // that the new segment starts with a fresh left pad of digital silence,
+  // exactly like the beginning of a stream.
   void ResetState() const;
 
   // Refreshes the trailing-silence counter from the buffered PCM. It is only

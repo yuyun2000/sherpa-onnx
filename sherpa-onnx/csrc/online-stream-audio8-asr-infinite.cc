@@ -57,6 +57,9 @@ OnlineStreamAudio8AsrInfinite::OnlineStreamAudio8AsrInfinite(
     }
   }
 
+  state_.zero_pad_end = gear.left_pad_samples;
+  state_.segment_start_virtual = gear.left_pad_samples;
+
   state_.enc_k = model_->CreateEmptyEncCache(0);
   state_.enc_v = model_->CreateEmptyEncCache(1);
   state_.dec_k = model_->CreateEmptyDecCache(0);
@@ -111,7 +114,8 @@ void OnlineStreamAudio8AsrInfinite::InputFinished() const {
 
 int64_t OnlineStreamAudio8AsrInfinite::AvailableVirtualSamples() const {
   const auto &gear = model_->Gear();
-  int64_t n = gear.left_pad_samples + state_.num_received;
+  int64_t n = gear.left_pad_samples + state_.extra_pad_samples +
+              state_.num_received;
   if (state_.input_finished) {
     n += static_cast<int64_t>(gear.right_pad_tokens) * gear.samples_per_token;
   }
@@ -120,7 +124,7 @@ int64_t OnlineStreamAudio8AsrInfinite::AvailableVirtualSamples() const {
 
 int64_t OnlineStreamAudio8AsrInfinite::VirtualPosition() const {
   const auto &gear = model_->Gear();
-  return gear.left_pad_samples + state_.num_received;
+  return gear.left_pad_samples + state_.extra_pad_samples + state_.num_received;
 }
 
 bool OnlineStreamAudio8AsrInfinite::IsReady() const {
@@ -139,10 +143,10 @@ void OnlineStreamAudio8AsrInfinite::FillWindow(int64_t start, int64_t end,
   out->assign(static_cast<size_t>(std::max<int64_t>(0, n)), 0.0f);
 
   for (int64_t v = start; v < end; ++v) {
-    if (v < gear.left_pad_samples) {
-      continue;  // left pad: zeros
+    if (v < state_.zero_pad_end) {
+      continue;  // left pad of this segment: digital silence
     }
-    const int64_t user = v - gear.left_pad_samples;
+    const int64_t user = v - gear.left_pad_samples - state_.extra_pad_samples;
     if (user >= state_.num_received) {
       continue;  // trailing padding after InputFinished()
     }
@@ -168,7 +172,8 @@ void OnlineStreamAudio8AsrInfinite::Compact() const {
       0, state_.next_start - Audio8InfiniteGear::kLookBackSamples -
              static_cast<int64_t>(gear.prefill_tokens) *
                  gear.samples_per_token);
-  const int64_t keep_from_user = keep_from_v - gear.left_pad_samples;
+  const int64_t keep_from_user =
+      keep_from_v - gear.left_pad_samples - state_.extra_pad_samples;
   if (keep_from_user <= state_.pcm0) {
     return;
   }
@@ -235,16 +240,20 @@ void OnlineStreamAudio8AsrInfinite::ResetState() const {
 
   state_.num_silence_samples = 0;
 
-  // Re-arm the schedule so that the first window of the new segment covers the
-  // most recent `prefill_tokens` of audio, exactly like the first window of a
-  // stream does at t = 0.
+  // Re-arm the schedule as if a new stream started now: the new segment gets
+  // its own left pad of digital silence, followed by the audio that arrives
+  // next.  This is what the model was trained on (every segment starts with
+  // `left_pad_tokens` of silence at position 0).
   const int64_t prefill_samples =
       static_cast<int64_t>(gear.prefill_tokens) * gear.samples_per_token;
   const int64_t now = VirtualPosition();
   state_.segment_start_virtual = now;
+  state_.segment_start_user = state_.num_received;
+  state_.extra_pad_samples += gear.left_pad_samples;
+  state_.zero_pad_end = now + gear.left_pad_samples;
   state_.next_tokens = gear.prefill_tokens;
-  state_.next_end = std::max<int64_t>(now, prefill_samples);
-  state_.next_start = state_.next_end - prefill_samples;
+  state_.next_start = now;
+  state_.next_end = now + prefill_samples;
 }
 
 }  // namespace sherpa_onnx

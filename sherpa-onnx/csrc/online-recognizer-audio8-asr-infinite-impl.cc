@@ -182,6 +182,14 @@ OnlineRecognizerAudio8AsrInfiniteImpl::CreateStream() const {
 }
 
 bool OnlineRecognizerAudio8AsrInfiniteImpl::IsReady(OnlineStream *s) const {
+  const auto &c = config_.model_config.audio8_asr_infinite;
+  if (c.max_new_tokens > 0 &&
+      Cast(s)->State().num_generated >= c.max_new_tokens) {
+    // The safety cap stopped this segment: report "not ready" so that callers
+    // do not spin on DecodeStream().
+    return false;
+  }
+
   return Cast(s)->IsReady();
 }
 
@@ -229,10 +237,6 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const 
 
   const auto &c = config_.model_config.audio8_asr_infinite;
   const bool verbose = c.debug || config_.model_config.debug;
-
-  if (c.max_new_tokens > 0 && st.num_generated >= c.max_new_tokens) {
-    return;
-  }
 
   if (!stream->IsReady()) {
     return;
@@ -337,14 +341,19 @@ void OnlineRecognizerAudio8AsrInfiniteImpl::DecodeStream(OnlineStream *s) const 
   stream->UpdateSilence();
 
   if (verbose && (st.num_steps <= 3 || st.num_steps % 10 == 0)) {
+    double energy = 0;
+    for (float x : window) {
+      energy += static_cast<double>(x) * x;
+    }
+    energy = n_pcm > 0 ? std::sqrt(energy / n_pcm) : 0.0;
     SHERPA_ONNX_LOGE(
         "audio8-asr-infinite: step %lld window [%lld, %lld) n_pcm=%d "
-        "tokens=%d pos_enc=%lld pos_dec=%lld token=%lld text='%s'",
+        "tokens=%d pos_enc=%lld pos_dec=%lld token=%lld rms=%.4f text='%s'",
         static_cast<long long>(st.num_steps),
         static_cast<long long>(win_start), static_cast<long long>(win_end),
         n_pcm, num_tokens, static_cast<long long>(st.pos_enc),
         static_cast<long long>(st.pos_dec), static_cast<long long>(token),
-        st.text.c_str());
+        energy, st.text.c_str());
   }
 }
 
@@ -360,8 +369,7 @@ OnlineRecognizerResult OnlineRecognizerAudio8AsrInfiniteImpl::GetResult(
   r.ys_probs = st.token_probs;
   r.segment = s->GetCurrentSegment();
   r.start_time =
-      static_cast<float>(st.segment_start_virtual - gear_.left_pad_samples) /
-      static_cast<float>(kSampleRate);
+      static_cast<float>(st.segment_start_user) / static_cast<float>(kSampleRate);
 
   r.text = ApplyInverseTextNormalization(std::move(r.text));
   r.text = ApplyHomophoneReplacer(std::move(r.text));
